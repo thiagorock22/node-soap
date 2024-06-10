@@ -118,19 +118,20 @@ export class HttpClient implements IHttpClient {
           'body': attachment.body,
         });
       });
-      options.data = `--${boundary}\r\n`;
-
+      options.data = Buffer.from(`--${boundary}\r\n`)
       let multipartCount = 0;
       multipart.forEach((part) => {
         Object.keys(part).forEach((key) => {
           if (key !== 'body') {
-            options.data += `${key}: ${part[key]}\r\n`;
+            options.data = options.data.concat([options.data, `${key}: ${part[key]}\r\n`])
           }
         });
-        options.data += '\r\n';
-        options.data += `${part.body}\r\n--${boundary}${
-          multipartCount === multipart.length - 1 ? '--' : ''
-        }\r\n`;
+        options.data = options.data.concat([
+          options.data, 
+          Buffer.from('\r\n'),
+          part.body,
+          Buffer.from(`\r\n--${boundary}${multipartCount === multipart.length - 1 ? '--' : ''}\r\n`)
+        ])
         multipartCount++;
       });
     } else {
